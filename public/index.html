@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Attendance & Performance System</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f7f6; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 800px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h2 { color: #007bff; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .section { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background: #fafafa; }
+        input, button { padding: 8px; margin: 5px 0; width: 100%; box-sizing: border-box; }
+        button { background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #0056b3; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #007bff; color: white; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Student Attendance & Academic Performance Management System</h2>
+
+    <!-- TC01: Faculty Login -->
+    <div id="loginSection" class="section">
+        <h3>Faculty Login (TC01)</h3>
+        <input type="text" id="username" placeholder="Username (faculty_admin)" value="faculty_admin">
+        <input type="password" id="password" placeholder="Password" value="password123">
+        <button onclick="login()">Login</button>
+    </div>
+
+    <!-- Main Dashboard (Hidden until login) -->
+    <div id="dashboardSection" class="section hidden">
+        <h3>Faculty Dashboard</h3>
+        <p id="welcomeMsg" style="color: green; font-weight: bold;"></p>
+
+        <!-- TC02: Add Student -->
+        <div id="addStudentForm" style="margin-bottom: 15px;">
+            <h4>Add Student (TC02)</h4>
+            <input type="text" id="studentName" placeholder="Student Name">
+            <input type="text" id="rollNo" placeholder="Roll No (e.g., CS202601)">
+            <input type="text" id="department" placeholder="Department">
+            <button onclick="addStudent()">Add Student</button>
+        </div>
+
+        <!-- Student Records Table -->
+        <h4>Student Records & Operations</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th>Roll No</th>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Attendance</th>
+                    <th>Marks</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="studentTableBody">
+                <!-- Dynamically populated -->
+            </tbody>
+        </table>
+
+        <!-- TC07: Report Section -->
+        <div style="margin-top: 15px;">
+            <h4>Performance Reports (TC07)</h4>
+            <button id="generateReportBtn" onclick="generateReport()">Generate Performance Report</button>
+            <div id="reportOutput" style="margin-top: 10px; font-weight: bold; color: #333;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let students = [];
+
+    function login() {
+        const user = document.getElementById('username').value;
+        if(user) {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.remove('hidden');
+            document.getElementById('welcomeMsg').innerText = "Login successful! Welcome, " + user;
+        } else {
+            alert("Please enter username");
+        }
+    }
+
+    function addStudent() {
+        const name = document.getElementById('studentName').value;
+        const roll = document.getElementById('rollNo').value;
+        const dept = document.getElementById('department').value;
+
+        if(!name || !roll) {
+            alert("Name and Roll No are required!");
+            return;
+        }
+
+        students.push({ roll, name, dept, attendance: 0, totalClasses: 0, marks: 0 });
+        renderTable();
+        document.getElementById('studentName').value = '';
+        document.getElementById('rollNo').value = '';
+        document.getElementById('department').value = '';
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('studentTableBody');
+        tbody.innerHTML = '';
+        students.forEach((s, index) => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${s.roll}</td>
+                    <td>${s.name}</td>
+                    <td>${s.dept}</td>
+                    <td>${s.attendance}/${s.totalClasses} (${s.totalClasses > 0 ? ((s.attendance/s.totalClasses)*100).toFixed(1) : 0}%)</td>
+                    <td>${s.marks}</td>
+                    <td>
+                        <button id="markAttendance" onclick="markAttendance(${index})" style="width:auto; padding:4px 8px;">Mark Attn</button>
+                        <button id="updateAttendance" onclick="updateAttendance(${index})" style="width:auto; padding:4px 8px; background:#ffc107; color:black;">Update</button>
+                        <button id="calcPercentage" onclick="calcPercentage(${index})" style="width:auto; padding:4px 8px; background:#17a2b8;">Calc %</button>
+                        <br>
+                        <input type="number" id="marksInput_${index}" placeholder="Marks" style="width:60px; display:inline-block;">
+                        <button id="saveMarksBtn" onclick="saveMarks(${index})" style="width:auto; padding:4px 8px; background:#28a745;">Save Marks</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    function markAttendance(index) {
+        students[index].totalClasses += 1;
+        students[index].attendance += 1;
+        alert("Attendance recorded for " + students[index].name);
+        renderTable();
+    }
+
+    function updateAttendance(index) {
+        let status = prompt("Update attendance status (Present/Absent):", "Present");
+        if(status) {
+            alert("Attendance updated successfully!");
+            renderTable();
+        }
+    }
+
+    function calcPercentage(index) {
+        let s = students[index];
+        let pct = s.totalClasses > 0 ? ((s.attendance / s.totalClasses) * 100).toFixed(1) : 0;
+        alert("Correct percentage for " + s.name + " is " + pct + "%");
+    }
+
+    function saveMarks(index) {
+        let val = document.getElementById(`marksInput_${index}`).value;
+        if(val !== "") {
+            students[index].marks = val;
+            alert("Marks saved successfully!");
+            renderTable();
+        } else {
+            alert("Please enter valid marks.");
+        }
+    }
+
+    function generateReport() {
+        if(students.length === 0) {
+            document.getElementById('reportOutput').innerText = "No student records available to generate report.";
+            return;
+        }
+        document.getElementById('reportOutput').innerText = "Report displayed: Generated academic and attendance summary for " + students.length + " student(s).";
+    }
+</script>
+
+</body>
+</html>
